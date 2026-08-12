@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>ValueKart Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="auth.js"></script>
+  <script>window.ValueKartAuth.guard();</script>
+</head>
+<body class="admin-body">
+  <header class="admin-topbar">
+    <div class="container admin-topbar-inner">
+      <a class="logo" href="index.html" aria-label="ValueKart home">
+        <span class="logo-mark">VK</span>
+        <span class="logo-text">Value<span>Kart</span></span>
+      </a>
+      <div class="admin-topbar-actions">
+        <span class="admin-user-chip"><span class="admin-user-dot"></span><span data-admin-username>Admin</span></span>
+        <a class="btn btn-outline" href="index.html" target="_blank" rel="noopener">View website ↗</a>
+        <button class="btn btn-outline admin-logout" id="logoutAdmin" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container admin-main">
+    <section class="admin-heading">
+      <div>
+        <span class="eyebrow">ValueKart control panel</span>
+        <h1>Products & categories</h1>
+        <p>Add deals, edit products and manage the categories shown on the ValueKart homepage.</p>
+      </div>
+      <button class="btn btn-soft" id="resetDemo">Reset demo data</button>
+    </section>
+
+    <div class="admin-notice admin-notice-secure">
+      <strong>Admin login enabled:</strong> a pre-configured administrator account, password hashing, login-attempt lockout, session-only access and a 30-minute idle timeout are active for this browser prototype. Product data is still stored locally; use server-side authentication and a database before public production deployment.
+    </div>
+
+    <section class="admin-stats" aria-label="Admin summary">
+      <article class="admin-stat-card"><span>Total products</span><strong id="statProducts">0</strong><small>All records</small></article>
+      <article class="admin-stat-card"><span>Live products</span><strong id="statLive">0</strong><small>Visible on website</small></article>
+      <article class="admin-stat-card"><span>Categories</span><strong id="statCategories">0</strong><small>Navigation filters</small></article>
+      <article class="admin-stat-card"><span>Avg. discount</span><strong id="statDiscount">0%</strong><small>Across live products</small></article>
+    </section>
+
+    <section class="admin-tabs" role="tablist">
+      <button class="admin-tab active" data-admin-tab="products" type="button">Products</button>
+      <button class="admin-tab" data-admin-tab="categories" type="button">Categories</button>
+      <button class="admin-tab" data-admin-tab="bulkUpload" type="button">Bulk Upload</button>
+      <button class="admin-tab" data-admin-tab="security" type="button">Security</button>
+    </section>
+
+    <section class="admin-panel active" id="productsPanel">
+      <div class="admin-layout">
+        <article class="admin-card admin-form-card">
+          <div class="admin-card-head">
+            <div><h2 id="productFormTitle">Add product</h2><p>Create a new deal card for the website.</p></div>
+            <button class="text-button" id="clearProductForm" type="button">Clear</button>
+          </div>
+
+          <form id="productForm" class="admin-form">
+            <input type="hidden" id="productId" />
+            <div class="form-field form-span-2">
+              <label for="productTitle">Product title *</label>
+              <input id="productTitle" required maxlength="180" placeholder="e.g. Toy Imagine Kids Pottery Wheel Kit" />
+            </div>
+
+            <div class="form-field">
+              <label for="productCategory">Category *</label>
+              <select id="productCategory" required></select>
+            </div>
+            <div class="form-field">
+              <label for="productRating">Deal score</label>
+              <input id="productRating" type="number" min="1" max="5" step="0.1" value="4.5" />
+            </div>
+
+            <div class="form-field">
+              <label for="productPrice">Deal price (₹) *</label>
+              <input id="productPrice" type="number" min="0" step="1" required placeholder="999" />
+            </div>
+            <div class="form-field">
+              <label for="productMrp">MRP (₹)</label>
+              <input id="productMrp" type="number" min="0" step="1" placeholder="1499" />
+            </div>
+
+            <div class="form-field">
+              <label for="productBadge">Badge</label>
+              <select id="productBadge">
+                <option value="discount">Discount</option>
+                <option value="limited">Limited Time</option>
+                <option value="flash">Flash Sale</option>
+                <option value="handpicked">Handpicked</option>
+                <option value="popular">Popular</option>
+                <option value="new">New</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="productBadgeText">Badge text</label>
+              <input id="productBadgeText" maxlength="30" placeholder="Auto for discount" />
+            </div>
+
+            <div class="form-field form-span-2">
+              <label for="productAmazonUrl">Amazon / affiliate URL *</label>
+              <input id="productAmazonUrl" type="url" required placeholder="https://www.amazon.in/..." />
+              <small>Use your final Amazon Associates link when publishing.</small>
+            </div>
+
+            <div class="form-field form-span-2">
+              <label for="productImageUrl">Product image URL</label>
+              <input id="productImageUrl" type="url" placeholder="https://.../product.jpg" />
+            </div>
+
+            <div class="form-field">
+              <label for="productImageFile">Or upload image</label>
+              <input id="productImageFile" type="file" accept="image/*" />
+              <small>For this prototype, small images are stored in your browser.</small>
+            </div>
+            <div class="form-field">
+              <label for="productArt">Fallback emoji</label>
+              <input id="productArt" maxlength="8" value="🛍️" />
+            </div>
+
+            <div class="form-field form-span-2">
+              <label for="productDescription">Short description</label>
+              <textarea id="productDescription" rows="4" maxlength="500" placeholder="Why this deal stands out..."></textarea>
+            </div>
+
+            <div class="form-field">
+              <label for="productViews">Views / popularity</label>
+              <input id="productViews" type="number" min="0" step="1" value="0" />
+            </div>
+            <div class="form-field">
+              <label>Status</label>
+              <label class="switch-row"><input id="productActive" type="checkbox" checked /><span class="switch"></span><span>Live on website</span></label>
+            </div>
+
+            <div class="product-preview form-span-2" id="productPreview">
+              <div class="preview-media" id="previewMedia">🛍️</div>
+              <div><span class="preview-kicker" id="previewCategory">Category</span><strong id="previewTitle">Product preview</strong><div class="preview-price"><span id="previewPrice">₹0</span><span id="previewDiscount">0% off</span></div></div>
+            </div>
+
+            <div class="form-actions form-span-2">
+              <button class="btn btn-primary" type="submit" id="saveProductBtn">Add product</button>
+              <button class="btn btn-outline" type="button" id="cancelEdit" hidden>Cancel edit</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="admin-card admin-list-card">
+          <div class="admin-card-head list-head">
+            <div><h2>Manage products</h2><p>Edit, publish or remove product deals.</p></div>
+            <input class="admin-search" id="adminProductSearch" placeholder="Search products..." />
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Product</th><th>Price</th><th>Status</th><th></th></tr></thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+          <div class="admin-empty" id="productAdminEmpty" hidden>No products found.</div>
+        </article>
+      </div>
+    </section>
+
+
+
+    <section class="admin-panel" id="bulkUploadPanel">
+      <div class="bulk-upload-layout">
+        <article class="admin-card">
+          <div class="admin-card-head bulk-head">
+            <div>
+              <h2>Bulk upload products</h2>
+              <p>Upload up to 1,000 products at once using CSV or Excel.</p>
+            </div>
+            <div class="bulk-template-actions">
+              <a class="btn btn-outline" href="ValueKart-Bulk-Upload-Template.xlsx" download>Excel template</a>
+              <a class="btn btn-outline" href="ValueKart-Bulk-Upload-Template.csv" download>CSV template</a>
+            </div>
+          </div>
+
+          <div class="bulk-dropzone" id="bulkDropzone" tabindex="0" role="button" aria-label="Upload CSV or Excel file">
+            <input id="bulkFileInput" type="file" accept=".csv,.xlsx,.xls" hidden />
+            <div class="bulk-upload-icon">↑</div>
+            <strong>Drop CSV or Excel file here</strong>
+            <span>or click to browse your computer</span>
+            <small>Supported: .csv, .xlsx, .xls · Maximum 10 MB</small>
+          </div>
+
+          <div class="bulk-file-bar" id="bulkFileBar" hidden>
+            <div>
+              <strong id="bulkFileName">No file selected</strong>
+              <small id="bulkFileMeta"></small>
+            </div>
+            <button class="text-button" id="bulkClearFile" type="button">Remove</button>
+          </div>
+
+          <div class="bulk-options">
+            <label class="bulk-option">
+              <span>Create missing categories</span>
+              <input id="bulkCreateCategories" type="checkbox" checked />
+            </label>
+            <label class="bulk-option">
+              <span>Duplicate products</span>
+              <select id="bulkDuplicateMode">
+                <option value="update">Update existing</option>
+                <option value="skip">Skip duplicates</option>
+              </select>
+            </label>
+            <label class="bulk-option">
+              <span>Import status</span>
+              <select id="bulkStatusMode">
+                <option value="file">Use file status</option>
+                <option value="live">Make all live</option>
+                <option value="draft">Make all draft</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="bulk-column-help">
+            <strong>Required columns</strong>
+            <span>title · category · price · amazon_url</span>
+            <span>Optional: mrp, rating, badge, badge_text, image_url, description, views, active, art</span>
+          </div>
+        </article>
+
+        <article class="admin-card">
+          <div class="admin-card-head bulk-preview-head">
+            <div>
+              <h2>Import preview</h2>
+              <p>Review validation results before products are added.</p>
+            </div>
+            <button class="btn btn-primary" id="bulkImportBtn" type="button" disabled>Import products</button>
+          </div>
+
+          <div class="bulk-summary">
+            <div class="bulk-summary-item"><span>Total rows</span><strong id="bulkTotalRows">0</strong></div>
+            <div class="bulk-summary-item"><span>Ready</span><strong id="bulkReadyRows">0</strong></div>
+            <div class="bulk-summary-item"><span>Updates</span><strong id="bulkUpdateRows">0</strong></div>
+            <div class="bulk-summary-item error"><span>Errors</span><strong id="bulkErrorRows">0</strong></div>
+          </div>
+
+          <div class="bulk-empty-state" id="bulkEmptyState">Upload a file to preview products here.</div>
+          <div class="table-wrap" id="bulkTableWrap" hidden>
+            <table class="admin-table bulk-table">
+              <thead><tr><th>Row</th><th>Product</th><th>Category</th><th>Price</th><th>Validation</th></tr></thead>
+              <tbody id="bulkTableBody"></tbody>
+            </table>
+          </div>
+          <div class="bulk-errors" id="bulkErrors" hidden></div>
+        </article>
+      </div>
+    </section>
+
+
+    <section class="admin-panel" id="securityPanel">
+      <div class="admin-layout admin-layout-security">
+        <article class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Admin security</h2><p>Current protection applied to this browser session.</p></div>
+            <span class="security-status"><span></span>Protected</span>
+          </div>
+          <div class="security-grid">
+            <div class="security-item"><strong>Signed in as</strong><span data-admin-username>Admin</span></div>
+            <div class="security-item"><strong>Password storage</strong><span>PBKDF2-SHA256 hash</span></div>
+            <div class="security-item"><strong>Idle timeout</strong><span>30 minutes</span></div>
+            <div class="security-item"><strong>Maximum session</strong><span>8 hours</span></div>
+            <div class="security-item"><strong>Failed-login protection</strong><span>60 sec lock after 5 attempts</span></div>
+            <div class="security-item"><strong>Session storage</strong><span>Current browser tab/session</span></div>
+          </div>
+          <button class="btn btn-outline" id="securitySignOut" type="button">Sign out of admin</button>
+        </article>
+
+        <article class="admin-card">
+          <div class="admin-card-head"><div><h2>Change password</h2><p>Verify the current password before setting a new one.</p></div></div>
+          <form id="changePasswordForm" class="admin-form security-form">
+            <div class="form-field form-span-2">
+              <label for="currentAdminPassword">Current password *</label>
+              <input id="currentAdminPassword" type="password" autocomplete="current-password" required />
+            </div>
+            <div class="form-field">
+              <label for="newAdminPassword">New password *</label>
+              <input id="newAdminPassword" type="password" autocomplete="new-password" required />
+              <small>10+ characters with uppercase, lowercase and a number.</small>
+            </div>
+            <div class="form-field">
+              <label for="confirmAdminPassword">Confirm new password *</label>
+              <input id="confirmAdminPassword" type="password" autocomplete="new-password" required />
+            </div>
+            <div class="form-actions form-span-2">
+              <button class="btn btn-primary" id="changePasswordBtn" type="submit">Update password</button>
+            </div>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <section class="admin-panel" id="categoriesPanel">
+      <div class="admin-layout admin-layout-categories">
+        <article class="admin-card">
+          <div class="admin-card-head"><div><h2>Add category</h2><p>Create a new navigation category.</p></div></div>
+          <form id="categoryForm" class="admin-form category-form">
+            <div class="form-field form-span-2">
+              <label for="categoryName">Category name *</label>
+              <input id="categoryName" required maxlength="60" placeholder="e.g. Stationery" />
+            </div>
+            <div class="form-field form-span-2">
+              <label for="categorySlug">URL slug</label>
+              <input id="categorySlug" maxlength="48" placeholder="stationery" />
+              <small>Lowercase identifier used for filtering. Auto-generated if blank.</small>
+            </div>
+            <div class="form-actions form-span-2"><button class="btn btn-primary" type="submit">Add category</button></div>
+          </form>
+        </article>
+
+        <article class="admin-card">
+          <div class="admin-card-head"><div><h2>Manage categories</h2><p>These appear in the homepage category strip.</p></div></div>
+          <div class="category-admin-list" id="categoryAdminList"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="data.js"></script>
+  <script src="admin.js"></script>
+  <script src="bulk-upload.js"></script>
+  <script>
+    window.ValueKartAuth.bindAdminSession();
+    document.getElementById('logoutAdmin').addEventListener('click', () => window.ValueKartAuth.logout());
+    document.getElementById('securitySignOut').addEventListener('click', () => window.ValueKartAuth.logout());
+    document.getElementById('changePasswordForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const current = document.getElementById('currentAdminPassword');
+      const next = document.getElementById('newAdminPassword');
+      const confirm = document.getElementById('confirmAdminPassword');
+      const button = document.getElementById('changePasswordBtn');
+      if (next.value !== confirm.value) return showToast('New passwords do not match.');
+      const issues = window.ValueKartAuth.validatePassword(next.value);
+      if (issues.length) return showToast(issues[0]);
+      button.disabled = true;
+      button.textContent = 'Updating…';
+      try {
+        await window.ValueKartAuth.changePassword(current.value, next.value);
+        event.target.reset();
+        showToast('Admin password updated.');
+      } catch (error) {
+        showToast(error.message || 'Could not update password.');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Update password';
+      }
+    });
+  </script>
+</body>
+</html>
