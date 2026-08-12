@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Admin Login — ValueKart</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="auth.js"></script>
+</head>
+<body class="auth-body">
+  <main class="auth-shell">
+    <a class="logo auth-logo" href="index.html" aria-label="ValueKart home">
+      <span class="logo-mark">VK</span>
+      <span class="logo-text">Value<span>Kart</span></span>
+    </a>
+
+    <section class="auth-card" aria-labelledby="authTitle">
+      <div class="auth-icon" aria-hidden="true">🔐</div>
+      <span class="eyebrow" id="authEyebrow">Admin access</span>
+      <h1 id="authTitle">Sign in to ValueKart</h1>
+      <p class="auth-subtitle" id="authSubtitle">Use your administrator credentials to continue to the control panel.</p>
+
+      <div class="auth-alert" id="authAlert" role="alert" hidden></div>
+
+      <form id="authForm" class="auth-form" autocomplete="on">
+        <div class="form-field">
+          <label for="authUsername">Admin username</label>
+          <input id="authUsername" name="username" autocomplete="username" maxlength="60" required placeholder="Admin username" />
+        </div>
+        <div class="form-field">
+          <label for="authPassword">Password</label>
+          <div class="password-field">
+            <input id="authPassword" name="password" type="password" autocomplete="current-password" required placeholder="Enter password" />
+            <button class="password-toggle" type="button" data-toggle-password="authPassword" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <div class="form-field" id="confirmField" hidden>
+          <label for="authConfirmPassword">Confirm password</label>
+          <div class="password-field">
+            <input id="authConfirmPassword" type="password" autocomplete="new-password" placeholder="Repeat password" />
+            <button class="password-toggle" type="button" data-toggle-password="authConfirmPassword" aria-label="Show password">Show</button>
+          </div>
+        </div>
+
+        <div class="password-rules" id="passwordRules" hidden>
+          <strong>Password requirements</strong>
+          <span>10+ characters · uppercase · lowercase · number</span>
+        </div>
+
+        <button class="btn btn-primary auth-submit" id="authSubmit" type="submit">Sign in</button>
+      </form>
+
+      <div class="auth-security-row">
+        <span>30 min idle timeout</span>
+        <span>5-attempt lockout</span>
+        <span>Hashed password</span>
+      </div>
+    </section>
+
+    <p class="auth-production-note"><strong>Prototype protection:</strong> the password is PBKDF2-hashed in this browser and the admin page is session-gated. For a public production deployment, use server-side authentication or Supabase/Auth; client-side files alone cannot provide true access control.</p>
+    <a class="auth-back" href="index.html">← Back to ValueKart</a>
+  </main>
+
+  <script>
+    const auth = window.ValueKartAuth;
+    const params = new URLSearchParams(location.search);
+    const next = auth.sanitizeNext(params.get('next') || 'admin.html');
+    const setupMode = !auth.hasProfile();
+    const form = document.getElementById('authForm');
+    const username = document.getElementById('authUsername');
+    const password = document.getElementById('authPassword');
+    const confirmPassword = document.getElementById('authConfirmPassword');
+    const confirmField = document.getElementById('confirmField');
+    const passwordRules = document.getElementById('passwordRules');
+    const submit = document.getElementById('authSubmit');
+    const alertBox = document.getElementById('authAlert');
+
+    function showAlert(message, type = 'error') {
+      alertBox.textContent = message;
+      alertBox.className = `auth-alert ${type}`;
+      alertBox.hidden = false;
+    }
+    function clearAlert() { alertBox.hidden = true; }
+    function setLoading(loading) {
+      submit.disabled = loading;
+      submit.textContent = loading ? 'Please wait…' : (setupMode ? 'Create admin & continue' : 'Sign in');
+    }
+    function refreshLockMessage() {
+      if (setupMode) return;
+      const lock = auth.getLockState();
+      if (lock.remainingMs > 0) {
+        const seconds = Math.ceil(lock.remainingMs / 1000);
+        showAlert(`Too many failed attempts. Try again in ${seconds} seconds.`);
+        submit.disabled = true;
+        setTimeout(refreshLockMessage, 1000);
+      } else {
+        submit.disabled = false;
+        if (!alertBox.hidden && alertBox.textContent.startsWith('Too many failed')) clearAlert();
+      }
+    }
+
+    if (setupMode) {
+      document.getElementById('authEyebrow').textContent = 'First-time setup';
+      document.getElementById('authTitle').textContent = 'Create your admin login';
+      document.getElementById('authSubtitle').textContent = 'Set the administrator username and password for this ValueKart browser.';
+      confirmField.hidden = false;
+      passwordRules.hidden = false;
+      confirmPassword.required = true;
+      password.autocomplete = 'new-password';
+      submit.textContent = 'Create admin & continue';
+    } else {
+      const profile = auth.getProfile();
+      username.value = profile?.username || '';
+      refreshLockMessage();
+    }
+
+    document.querySelectorAll('[data-toggle-password]').forEach(button => {
+      button.addEventListener('click', () => {
+        const field = document.getElementById(button.dataset.togglePassword);
+        const show = field.type === 'password';
+        field.type = show ? 'text' : 'password';
+        button.textContent = show ? 'Hide' : 'Show';
+        button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+    });
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      clearAlert();
+      setLoading(true);
+      try {
+        if (setupMode) {
+          if (password.value !== confirmPassword.value) throw new Error('Passwords do not match.');
+          const issues = auth.validatePassword(password.value);
+          if (issues.length) throw new Error(issues[0]);
+          await auth.setup(username.value, password.value);
+          location.replace(next);
+          return;
+        }
+        const result = await auth.login(username.value, password.value);
+        if (!result.ok) {
+          if (result.reason === 'locked') throw new Error(`Too many failed attempts. Try again in ${Math.ceil(result.remainingMs / 1000)} seconds.`);
+          if (result.reason === 'crypto') throw new Error(result.message || 'Secure browser cryptography is unavailable.');
+          throw new Error('Incorrect username or password.');
+        }
+        location.replace(next);
+      } catch (error) {
+        showAlert(error.message || 'Unable to sign in.');
+        setLoading(false);
+        refreshLockMessage();
+      }
+    });
+  </script>
+</body>
+</html>
