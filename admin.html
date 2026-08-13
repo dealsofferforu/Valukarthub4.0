@@ -7,6 +7,7 @@
   <meta name="referrer" content="no-referrer" />
   <title>ValueKart Admin</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="config.js"></script>
   <script src="auth.js"></script>
   <script>window.ValueKartAuth.guard();</script>
 </head>
@@ -32,11 +33,11 @@
         <h1>Products & categories</h1>
         <p>Add deals, edit products and manage the categories shown on the ValueKart homepage.</p>
       </div>
-      <button class="btn btn-soft" id="resetDemo">Reset demo data</button>
+      <button class="btn btn-soft" id="resetDemo">Refresh database</button>
     </section>
 
     <div class="admin-notice admin-notice-secure">
-      <strong>Admin login enabled:</strong> a pre-configured administrator account, password hashing, login-attempt lockout, session-only access and a 30-minute idle timeout are active for this browser prototype. Product data is still stored locally; use server-side authentication and a database before public production deployment.
+      <strong>Supabase connected:</strong> products and categories are loaded from the ValueKart database. Admin add, edit, delete and bulk upload actions are written through the protected Supabase admin API and appear on the public website.
     </div>
 
     <section class="admin-stats" aria-label="Admin summary">
@@ -116,7 +117,7 @@
             <div class="form-field">
               <label for="productImageFile">Or upload image</label>
               <input id="productImageFile" type="file" accept="image/*" />
-              <small>For this prototype, small images are stored in your browser.</small>
+              <small>Small uploads are stored with the product record. For production, image URLs are recommended.</small>
             </div>
             <div class="form-field">
               <label for="productArt">Fallback emoji</label>
@@ -259,15 +260,15 @@
       <div class="admin-layout admin-layout-security">
         <article class="admin-card">
           <div class="admin-card-head">
-            <div><h2>Admin security</h2><p>Current protection applied to this browser session.</p></div>
+            <div><h2>Admin security</h2><p>Server-side admin session protection through Supabase Edge Functions.</p></div>
             <span class="security-status"><span></span>Protected</span>
           </div>
           <div class="security-grid">
             <div class="security-item"><strong>Signed in as</strong><span data-admin-username>Admin</span></div>
-            <div class="security-item"><strong>Password storage</strong><span>PBKDF2-SHA256 hash</span></div>
+            <div class="security-item"><strong>Password storage</strong><span>PBKDF2-SHA256 in Supabase</span></div>
             <div class="security-item"><strong>Idle timeout</strong><span>30 minutes</span></div>
             <div class="security-item"><strong>Maximum session</strong><span>8 hours</span></div>
-            <div class="security-item"><strong>Failed-login protection</strong><span>60 sec lock after 5 attempts</span></div>
+            <div class="security-item"><strong>Admin API</strong><span>Server-side credential verification</span></div>
             <div class="security-item"><strong>Session storage</strong><span>Current browser tab/session</span></div>
           </div>
           <button class="btn btn-outline" id="securitySignOut" type="button">Sign out of admin</button>
