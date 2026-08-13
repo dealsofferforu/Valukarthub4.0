@@ -7,6 +7,7 @@
   <meta name="referrer" content="no-referrer" />
   <title>Admin Login — ValueKart</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="config.js"></script>
   <script src="auth.js"></script>
 </head>
 <body class="auth-body">
@@ -20,7 +21,7 @@
       <div class="auth-icon" aria-hidden="true">🔐</div>
       <span class="eyebrow">Admin access</span>
       <h1 id="authTitle">Sign in to ValueKart</h1>
-      <p class="auth-subtitle">Enter the pre-configured administrator username and password to open the control panel.</p>
+      <p class="auth-subtitle">Sign in with the ValueKart administrator account. Authentication is verified by the Supabase admin API.</p>
 
       <div class="auth-alert" id="authAlert" role="alert" hidden></div>
 
@@ -42,12 +43,12 @@
 
       <div class="auth-security-row">
         <span>30 min idle timeout</span>
-        <span>5-attempt lockout</span>
+        <span>Server-side verification</span>
         <span>Hashed password</span>
       </div>
     </section>
 
-    <p class="auth-production-note"><strong>Prototype protection:</strong> this static version uses browser-side authentication. For the live ValueKart deployment, admin authentication should be enforced by the server/database layer.</p>
+    <p class="auth-production-note"><strong>Database protection:</strong> admin credentials and sessions are verified server-side by the Supabase Edge Function. Product changes are not stored in browser local storage.</p>
     <a class="auth-back" href="index.html">← Back to ValueKart</a>
   </main>
 
